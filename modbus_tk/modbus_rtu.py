@@ -18,8 +18,10 @@ from hooks import call_hooks
 
 import RPi.GPIO as GPIO
 txEn = 18
+GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(txEn, GPIO.OUT)
+
 
 #-------------------------------------------------------------------------------
 class RtuQuery(Query):
@@ -109,19 +111,21 @@ class RtuMaster(Master):
 
     def _send(self, request):
         """Send request to the slave"""
+        GPIO.output(txEn, True)
         retval = call_hooks("modbus_rtu.RtuMaster.before_send", (self, request))
         if retval <> None:
             request = retval
-            
-        GPIO.output(txEn, True)
+        
         self._serial.flushInput()
         self._serial.flushOutput()
 
         self._serial.write(request)
+
         time.sleep(3.5 * self._t0)
         GPIO.output(txEn, False)
     def _recv(self, expected_length=-1):
         """Receive the response from the slave"""
+
         response = ""
         read_bytes = "dummy"
         while read_bytes:
